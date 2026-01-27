@@ -1,0 +1,551 @@
+/* ==================== BTECH GUIDES STYLING ==================== */
+
+.blueprint-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 50px 20px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2d1b4e 100%);
+  min-height: 100vh;
+}
+
+/* Header Section */
+.blueprint-header {
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 20px;
+  padding: 50px 40px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 50px;
+}
+
+.blueprint-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.blueprint-badge {
+  display: inline-block;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 15px;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.blueprint-title {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -1px;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.blueprint-subtitle {
+  color: #cbd5e1;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  max-width: 800px;
+  font-weight: 500;
+}
+
+/* Year Cards */
+.blueprint-years {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  margin-bottom: 50px;
+}
+
+.year-card {
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 18px;
+  padding: 40px;
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.year-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.year-card:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 20px 80px rgba(102, 126, 234, 0.3);
+  transform: translateY(-8px);
+}
+
+.year-content {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+}
+
+.year-left {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.year-icon-box {
+  width: 80px;
+  height: 80px;
+  background: rgba(102, 126, 234, 0.15);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+}
+
+.year-card:hover .year-icon-box {
+  background: rgba(102, 126, 234, 0.25);
+  border-color: rgba(102, 126, 234, 0.6);
+  transform: scale(1.1);
+}
+
+.year-icon-box svg {
+  width: 40px;
+  height: 40px;
+  color: #a5b4fc;
+}
+
+.year-info h3 {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #e0e7ff;
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.year-description {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-style: italic;
+  padding: 12px 15px;
+  background: rgba(102, 126, 234, 0.1);
+  border-left: 3px solid #667eea;
+  border-radius: 6px;
+}
+
+.focus-areas {
+  margin-top: 20px;
+}
+
+.focus-label {
+  color: #a5b4fc;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.focus-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.focus-tag {
+  padding: 8px 14px;
+  background: rgba(102, 126, 234, 0.15);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.focus-tag:hover {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: rgba(102, 126, 234, 0.6);
+  color: #a5b4fc;
+}
+
+/* Action Points */
+.year-right {
+  background: rgba(102, 126, 234, 0.05);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  padding: 30px;
+}
+
+.action-title {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #a5b4fc;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.action-title svg {
+  width: 24px;
+  height: 24px;
+  color: #fbbf24;
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.action-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.action-icon {
+  width: 24px;
+  height: 24px;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.action-icon svg {
+  width: 16px;
+  height: 16px;
+  color: #22c55e;
+}
+
+.action-text {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* Footer Section */
+.blueprint-footer {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 18px;
+  padding: 50px 40px;
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.blueprint-footer::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 600px;
+  height: 600px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+
+.blueprint-footer-content {
+  position: relative;
+  z-index: 1;
+}
+
+.blueprint-footer h3 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: white;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.blueprint-footer-text {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.05rem;
+  line-height: 1.8;
+  max-width: 600px;
+  margin-bottom: 30px;
+  font-weight: 500;
+}
+
+.blueprint-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.blueprint-btn {
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: white;
+  color: #667eea;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .year-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .blueprint-container {
+    padding: 40px 20px;
+  }
+
+  .blueprint-header {
+    padding: 40px 30px;
+  }
+
+  .blueprint-title {
+    font-size: 2.2rem;
+  }
+
+  .year-card {
+    padding: 30px;
+  }
+
+  .year-left {
+    gap: 20px;
+  }
+
+  .year-right {
+    padding: 25px;
+  }
+}
+
+@media (max-width: 768px) {
+  .blueprint-container {
+    padding: 30px 15px;
+  }
+
+  .blueprint-header {
+    padding: 30px 20px;
+    margin-bottom: 30px;
+  }
+
+  .blueprint-title {
+    font-size: 1.8rem;
+  }
+
+  .blueprint-subtitle {
+    font-size: 1rem;
+  }
+
+  .year-card {
+    padding: 20px;
+  }
+
+  .year-content {
+    gap: 25px;
+  }
+
+  .year-info h3 {
+    font-size: 1.4rem;
+  }
+
+  .year-icon-box {
+    width: 70px;
+    height: 70px;
+  }
+
+  .year-icon-box svg {
+    width: 35px;
+    height: 35px;
+  }
+
+  .year-right {
+    padding: 20px;
+  }
+
+  .action-title {
+    font-size: 1rem;
+  }
+
+  .focus-tags {
+    gap: 8px;
+  }
+
+  .focus-tag {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .blueprint-footer {
+    padding: 35px 25px;
+  }
+
+  .blueprint-footer h3 {
+    font-size: 2rem;
+  }
+
+  .blueprint-footer-text {
+    font-size: 1rem;
+  }
+
+  .blueprint-buttons {
+    gap: 10px;
+  }
+
+  .blueprint-btn {
+    padding: 12px 20px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .blueprint-container {
+    padding: 20px 10px;
+  }
+
+  .blueprint-header {
+    padding: 20px 15px;
+    margin-bottom: 20px;
+  }
+
+  .blueprint-badge {
+    font-size: 0.7rem;
+    padding: 8px 14px;
+  }
+
+  .blueprint-title {
+    font-size: 1.5rem;
+  }
+
+  .blueprint-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .year-card {
+    padding: 15px;
+  }
+
+  .year-content {
+    gap: 15px;
+  }
+
+  .year-info h3 {
+    font-size: 1.2rem;
+  }
+
+  .year-icon-box {
+    width: 60px;
+    height: 60px;
+  }
+
+  .year-icon-box svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .year-right {
+    padding: 15px;
+  }
+
+  .action-title {
+    font-size: 0.9rem;
+  }
+
+  .action-text {
+    font-size: 0.9rem;
+  }
+
+  .focus-label {
+    font-size: 0.75rem;
+  }
+
+  .blueprint-footer {
+    padding: 25px 15px;
+  }
+
+  .blueprint-footer h3 {
+    font-size: 1.5rem;
+  }
+
+  .blueprint-footer-text {
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+
+  .blueprint-buttons {
+    flex-direction: column;
+  }
+
+  .blueprint-btn {
+    width: 100%;
+    padding: 12px 16px;
+  }
+}
