@@ -191,12 +191,17 @@
   background: #fee;
   color: #c33;
 }
+
+.message-content {
   background: #2563EB;
   color: #FFFFFF;
   border-bottom-right-radius: 4px;
   gap: 8px;
   align-items: flex-end;
   max-width: 85%;
+}
+
+.message-content.bot {
   background: #F3F4F6;
   color: #111827;
   border: 1px solid rgba(0, 180, 216, 0.08);
@@ -383,8 +388,7 @@
 .chatbot-container input,
 .chatbot-container textarea {
   color: #111827 !important;
-    background-color: #FFFFFF !important;
-  color: #111827 !important;
+  background-color: #FFFFFF !important;
 }
 
 

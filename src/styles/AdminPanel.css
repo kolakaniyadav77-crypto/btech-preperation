@@ -512,7 +512,9 @@ td {
 .admin-panel select,
 .admin-panel textarea {
   color: #111827 !important;
-    background-color: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+}
+
 .admin-btn,
 .admin-action-btn {
   color: #111827 !important;

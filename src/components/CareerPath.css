@@ -698,8 +698,9 @@
 .career-path-container select,
 .career-path-container textarea {
   color: #111827 !important;
-    background-color: #FFFFFF !important;
+  background-color: #FFFFFF !important;
 }
+
 .card-text {
   color: #000000 !important;
 }

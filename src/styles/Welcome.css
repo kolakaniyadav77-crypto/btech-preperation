@@ -572,7 +572,9 @@
 .welcome-form textarea,
 .welcome-form select {
   color: #111827 !important;
-    background-color: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+}
+
 .welcome-form textarea::placeholder {
   color: #111827 !important;
 }

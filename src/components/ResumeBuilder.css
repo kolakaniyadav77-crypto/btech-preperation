@@ -596,7 +596,9 @@
 .resume-builder-container select,
 .resume-builder-container textarea {
   color: #111827 !important;
-    background-color: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+}
+
 .save-resume-btn {
   color: #111827 !important;
 }
