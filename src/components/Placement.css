@@ -961,7 +961,7 @@
   .job-details {
     grid-template-columns: 1fr;
   }
-}
+
 
 @media (max-width: 768px) {
   .placement-container {
@@ -1133,3 +1133,5 @@
     height: 40px;
     font-size: 1.1rem;
   }
+
+}
