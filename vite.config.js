@@ -11,6 +11,10 @@ export default defineConfig({
     strictPort: false,
     middlewareMode: false,
     allowedHosts: [
+    
+  'https://your-project.vercel.app',
+  
+
       'localhost',
       '127.0.0.1',
       'deana-irresoluble-shawanda.ngrok-free.dev',  // Your specific ngrok domain

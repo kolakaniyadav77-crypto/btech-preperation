@@ -1,5 +1,5 @@
 // Enhanced Code Compiler Service
-// Multiple reliable execution backends with smart fallback
+// Single reliable backend (server/Piston) with light local fallbacks
 // ========================================================
 
 export const languageMap = {
@@ -14,6 +14,10 @@ export const languageMap = {
   'Rust': 'rust',
   'PHP': 'php',
   'TypeScript': 'typescript',
+  'Kotlin': 'kotlin',
+  'Swift': 'swift',
+  'R': 'r',
+  // Additional languages may be appended here; the frontend dropdown reflects this map.
 };
 
 // ============ EXECUTION BACKENDS ============
@@ -70,166 +74,7 @@ const executeJavaScript = (code) => {
   }
 };
 
-// 2. Piston API (https://piston.readthedocs.io)
-const executeViaPiston = async (code, language, input = '') => {
-  try {
-    console.log('📤 Attempting Piston API...');
-    
-    const response = await fetch('https://emkc.org/api/v2/piston/execute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        language: language,
-        version: '*',
-        files: [
-          {
-            name: 'main',
-            content: code,
-          }
-        ],
-        stdin: input || '',
-        run_timeout: 10000,
-      }),
-      timeout: 15000,
-    });
-
-    if (!response.ok) {
-      console.warn(`Piston API returned ${response.status}`);
-      return null;
-    }
-    
-    const data = await response.json();
-    
-    if (data.run?.stdout) {
-      console.log('✅ Piston execution successful');
-      return { 
-        success: true, 
-        output: data.run.stdout.trim() || '(No output)',
-        error: data.run.stderr || '',
-        executionTime: `${data.run.signal || 0}ms`
-      };
-    } else if (data.run?.stderr) {
-      console.log('⚠️ Piston execution error');
-      return { 
-        success: false, 
-        error: data.run.stderr.trim() || 'Execution failed'
-      };
-    } else if (data.compile?.stderr) {
-      console.log('⚠️ Piston compilation error');
-      return { 
-        success: false, 
-        error: (data.compile.stderr + (data.compile.stdout || '')).trim()
-      };
-    }
-    return null;
-  } catch (error) {
-    console.warn('Piston API error:', error.message);
-    return null;
-  }
-};
-
-// 3. Jdoodle API (reliable backup)
-const executeViaJdoodle = async (code, language, input = '') => {
-  try {
-    console.log('📤 Attempting Jdoodle API...');
-    
-    const languageMap = {
-      'python3': 'python3',
-      'javascript': 'nodejs',
-      'java': 'java',
-      'cpp': 'cpp',
-      'c': 'c',
-      'ruby': 'ruby',
-      'go': 'go',
-      'php': 'php',
-    };
-    
-    const jdoodleLanguage = languageMap[language] || language;
-    
-    const response = await fetch('https://api.jdoodle.com/v1/execute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        script: code,
-        language: jdoodleLanguage,
-        versionIndex: '0',
-        clientId: import.meta.env?.VITE_JDOODLE_CLIENT_ID || 'default',
-        clientSecret: import.meta.env?.VITE_JDOODLE_SECRET || 'default',
-        stdin: input || '',
-      }),
-      timeout: 15000,
-    });
-
-    if (!response.ok) {
-      console.warn(`Jdoodle API returned ${response.status}`);
-      return null;
-    }
-    
-    const data = await response.json();
-    
-    if (data.output) {
-      console.log('✅ Jdoodle execution successful');
-      return { 
-        success: true, 
-        output: data.output.trim() || '(No output)',
-        executionTime: `${data.cpuTime || 0}s`
-      };
-    } else if (data.error) {
-      console.log('⚠️ Jdoodle execution error');
-      return { 
-        success: false, 
-        error: data.error
-      };
-    }
-    return null;
-  } catch (error) {
-    console.warn('Jdoodle API error:', error.message);
-    return null;
-  }
-};
-
-// 4. Rapid Code Execution API (Ultimate backup)
-const executeViaRapidAPI = async (code, language, input = '') => {
-  try {
-    console.log('📤 Attempting RapidAPI Code Execution...');
-    
-    const response = await fetch('https://online-code-compiler.p.rapidapi.com/', {
-      method: 'POST',
-      headers: {
-        'x-rapidapi-key': import.meta.env?.VITE_RAPIDAPI_KEY || '',
-        'x-rapidapi-host': 'online-code-compiler.p.rapidapi.com',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        code: code,
-        language: language,
-        input: input || '',
-      }),
-      timeout: 15000,
-    });
-
-    if (!response.ok) {
-      console.warn(`RapidAPI returned ${response.status}`);
-      return null;
-    }
-    
-    const data = await response.json();
-    
-    if (data.output) {
-      console.log('✅ RapidAPI execution successful');
-      return { 
-        success: true, 
-        output: data.output.trim() || '(No output)',
-      };
-    }
-    return null;
-  } catch (error) {
-    console.warn('RapidAPI error:', error.message);
-    return null;
-  }
-};
-
-// 5. Local server proxy (uses backend `/api/compile` if frontend and server running together)
+// 2. Server proxy (Piston)
 const executeViaServer = async (code, language, input = '') => {
   try {
     const resp = await fetch('/api/compile', {
@@ -251,6 +96,32 @@ const executeViaServer = async (code, language, input = '') => {
   }
 };
 
+// local Python runtime using Pyodide (WASM) for offline/JS-only environments
+let pyodide = null;
+let pyodidePromise = null;
+async function loadPyodideRuntime() {
+  if (pyodide) return pyodide;
+  if (!pyodidePromise) {
+    pyodidePromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js';
+      script.onload = async () => {
+        try {
+          pyodide = await window.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/' });
+          resolve(pyodide);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      script.onerror = reject;
+      document.body.appendChild(script);
+    });
+  }
+  return pyodidePromise;
+}
+
+
+
 /**
  * Execute code with intelligent fallback system
  * @param {string} code - Source code to execute
@@ -262,7 +133,7 @@ export const executeCode = async (code, language, input = '') => {
   try {
     console.log('🚀 Executing code in:', language);
 
-    // Validation
+    // basic validation
     if (!code || code.trim().length === 0) {
       return { success: false, error: 'Please write some code first', output: '' };
     }
@@ -276,54 +147,47 @@ export const executeCode = async (code, language, input = '') => {
       };
     }
 
-    // Strategy 1: JavaScript - execute locally (instant, no API)
+    // local JS fallback for offline mode
     if (language === 'JavaScript') {
-      console.log('💻 Executing JavaScript locally...');
       const result = executeJavaScript(code);
       if (result.success) {
-        console.log('✅ Local execution successful');
         return result;
       }
-      console.warn('⚠️ Local execution failed, trying APIs...');
     }
 
-    // Strategy 2: Try Piston API (most reliable, free)
-    let result = await executeViaPiston(code, lang, input);
-    if (result) return result;
-
-    // Strategy 3: Try Jdoodle API
-    result = await executeViaJdoodle(code, language, input);
-    if (result) return result;
-
-    // Strategy 4: Try server proxy
-    result = await executeViaServer(code, language, input);
-    if (result) return result;
-
-    // Strategy 4: Try RapidAPI (if key available)
-    if (import.meta.env?.VITE_RAPIDAPI_KEY) {
-      result = await executeViaRapidAPI(code, language, input);
-      if (result) return result;
+    // local Python via Pyodide (optional offline support)
+    if (language === 'Python') {
+      try {
+        const py = await loadPyodideRuntime();
+        const wrapper = `import sys, io
+buf = io.StringIO()
+sys.stdout = buf
+${code}
+output = buf.getvalue()`;
+        let output = await py.runPythonAsync(wrapper);
+        output = output === undefined || output === null ? '' : String(output);
+        if (!output.trim()) {
+          try {
+            const val = await py.runPythonAsync(code);
+            if (val !== undefined && val !== null && String(val) !== 'None') {
+              output = String(val);
+            }
+          } catch {}
+        }
+        return { success: true, output };
+      } catch (err) {
+        console.warn('Pyodide failed:', err);
+      }
     }
 
-    // Strategy 5: Fall back to local server proxy if running
-    try {
-      const serverRes = await executeViaServer(code, language, input);
-      if (serverRes) return serverRes;
-    } catch (e) {
-      console.warn('server proxy error', e.message || e);
-    }
+    // always forward to server proxy
+    const serverResult = await executeViaServer(code, lang, input);
+    if (serverResult) return serverResult;
 
-    // All backends failed
-    let statusMsg = '';
-    try {
-      const statuses = await checkCompilers();
-      statusMsg = '\n\nBackend status: ' + JSON.stringify(statuses);
-    } catch (e) {
-      // ignore if status check fails
-    }
+    // if we reach here, server call failed
     return {
       success: false,
-      error: '❌ All compilers are temporarily unavailable.\n\nPlease:\n1. Check your internet connection\n2. Try again in a moment\n3. Or use an online IDE like Replit, CodePen, or LeetCode' + statusMsg,
+      error: `⚠️ Unable to execute code. Server backend appears unavailable.`,
       output: '',
     };
 
@@ -336,6 +200,7 @@ export const executeCode = async (code, language, input = '') => {
     };
   }
 };
+
 
 /**
  * Get supported languages
@@ -352,7 +217,7 @@ export const formatExecutionResult = (result) => {
     return {
       type: 'success',
       message: '✅ Code executed successfully',
-      output: result.output || '(No output)',
+      output: result.output == null ? '(No output)' : result.output,
       time: result.executionTime || '',
     };
   } else {
@@ -371,42 +236,26 @@ export const formatExecutionResult = (result) => {
  */
 export const checkCompilers = async () => {
   const results = {};
-  const testCode = 'print(\'ping\')'; // python snippet works everywhere
-
-  try {
-    const pistonRes = await executeViaPiston(testCode, 'python3');
-    results.piston = pistonRes && pistonRes.success ? 'ok' : 'error';
-  } catch (e) {
-    results.piston = 'error';
-  }
-
-  try {
-    const jdoodleRes = await executeViaJdoodle(testCode, 'python3');
-    results.jdoodle = jdoodleRes && jdoodleRes.success ? 'ok' : 'error';
-  } catch (e) {
-    results.jdoodle = 'error';
-  }
-
-  if (import.meta.env?.VITE_RAPIDAPI_KEY) {
-    try {
-      const rapidRes = await executeViaRapidAPI(testCode, 'python3');
-      results.rapidapi = rapidRes && rapidRes.success ? 'ok' : 'error';
-    } catch (e) {
-      results.rapidapi = 'error';
-    }
-  }
-
-  // check local server
   try {
     const serverRes = await fetch('/api/compile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: testCode, language: 'Python', input: '' })
+      body: JSON.stringify({ code: 'print("ping")', language: 'python3', input: '' })
     });
     const d = await serverRes.json();
     results.server = d.success ? 'ok' : 'error';
-  } catch (e) {
+  } catch {
     results.server = 'error';
+  }
+
+  // always have a local JS executor
+  results['js-local'] = 'ok';
+
+  try {
+    await loadPyodideRuntime();
+    results['python-local'] = 'ok';
+  } catch {
+    results['python-local'] = 'error';
   }
 
   return results;

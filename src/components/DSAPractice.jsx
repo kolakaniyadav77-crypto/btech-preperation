@@ -4,6 +4,7 @@ import progressTracker from "../utils/progressTracker";
 import { dsaData, dsaTopics } from "../data/dsaProblems";
 import { getSolution } from "../data/dsaSolutions";
 import CodeEditor from "./CodeEditor";
+import codeCompilerService from "../services/codeCompilerService";
 import "./DSAPractice.css";
 
 export default function DSAPractice() {
@@ -43,7 +44,8 @@ export default function DSAPractice() {
     setProblemCode(saved || '');
   }, [selectedProblem, currentUser?.id]);
 
-  const languages = ["Python", "JavaScript", "Java", "C++", "Go", "Rust", "TypeScript", "C#"];
+  // languages list is derived from the compiler service; keeps UI in sync with available backends
+  const languages = codeCompilerService.getSupportedLanguages();
   const difficulties = ["All", "Easy", "Medium", "Hard"];
 
   const filterProblems = (problems) => {

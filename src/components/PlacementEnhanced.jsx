@@ -17,7 +17,6 @@ const PlacementEnhanced = () => {
   const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [expandedProblem, setExpandedProblem] = useState(null);
   const [editorCode, setEditorCode] = useState({});
-  const [codeOutput, setCodeOutput] = useState({});
 
   const generateAnswer = (questionText) => {
     const q = (questionText || '').toLowerCase();
@@ -978,6 +977,140 @@ const PlacementEnhanced = () => {
                     );
                   })}
                 </div>
+
+                {/* if this round includes coding problems, render them with full IDE support */}
+                {round.codingProblems && round.codingProblems.length > 0 && (
+                  <div style={{ marginTop: '20px' }}>
+                    <h5 style={{ color: '#10b981', marginBottom: '10px', fontSize: '14px', fontWeight: '600' }}>
+                      💻 Coding Practice
+                    </h5>
+                    <div style={{ display: 'grid', gap: '15px' }}>
+                      {round.codingProblems.map((prob) => (
+                        <div key={`${idx}-${prob.id}`} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
+                          {/* Problem Header */}
+                          <div style={{ padding: '15px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '15px' }}>
+                              <div>
+                                <h4 style={{ margin: '0 0 8px 0', color: '#111827', fontSize: '16px', fontWeight: '600' }}>
+                                  {prob.title}
+                                </h4>
+                                <div style={{ color: '#94a3b8', fontSize: '13px' }}>
+                                  📊 Difficulty: <span style={{
+                                    color: prob.difficulty === 'Easy' ? '#10b981' : prob.difficulty === 'Medium' ? '#f59e0b' : '#ef4444',
+                                    fontWeight: '600'
+                                  }}>{prob.difficulty}</span>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                <button
+                                  onClick={() => setExpandedProblem(expandedProblem === prob.id ? null : prob.id)}
+                                  style={{
+                                    padding: '8px 14px',
+                                    background: 'rgba(59, 130, 246, 0.2)',
+                                    color: '#3b82f6',
+                                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '12px',
+                                    transition: 'all 0.3s ease'
+                                  }}
+                                  onMouseOver={(e) => {
+                                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                                  }}
+                                  onMouseOut={(e) => {
+                                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                                  }}
+                                >
+                                  {expandedProblem === prob.id ? 'Hide' : 'Show'} details
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Problem Description & Compiler */}
+                          {expandedProblem === prob.id && (
+                            <div style={{ padding: '20px', borderBottom: '1px solid #E5E7EB' }}>
+                              {/* Description */}
+                              <div style={{ marginBottom: '20px' }}>
+                                <h5 style={{ color: '#10b981', marginBottom: '10px', fontSize: '14px', fontWeight: '600' }}>
+                                  📝 Problem Statement
+                                </h5>
+                                <div style={{
+                                  background: '#F9FAFB',
+                                  border: '1px solid #E5E7EB',
+                                  borderRadius: '8px',
+                                  padding: '12px',
+                                  color: '#cbd5e1',
+                                  fontSize: '13px',
+                                  lineHeight: '1.6'
+                                }}>
+                                  {prob.description}
+                                </div>
+                              </div>
+
+                              {/* Code Editor & Compiler */}
+                              <div style={{ marginBottom: '20px' }}>
+                                <div>
+                                  <CodeEditor
+                                    initialCode={editorCode[prob.id] || ''}
+                                    language={(() => {
+                                      const lang = editorCode[prob.id + '_lang'] || 'javascript';
+                                      switch ((lang || '').toLowerCase()) {
+                                        case 'javascript': return 'JavaScript';
+                                        case 'python': return 'Python';
+                                        case 'java': return 'Java';
+                                        case 'cpp': return 'C++';
+                                        case 'c++': return 'C++';
+                                        case 'csharp': return 'C#';
+                                        case 'c#': return 'C#';
+                                        default: return 'JavaScript';
+                                      }
+                                    })()}
+                                    onCodeChange={(code) => setEditorCode({ ...editorCode, [prob.id]: code })}
+                                    showCompiler={true}
+                                    allowLanguageChange={true}
+                                    onLanguageChange={(lang) => {
+                                      const key = (lang || '').toLowerCase();
+                                      const short = key === 'c++' ? 'cpp' : key === 'c#' ? 'csharp' : key;
+                                      setEditorCode({ ...editorCode, [prob.id + '_lang']: short });
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Load Solution */}
+                              <div>
+                                <h5 style={{ color: '#10b981', marginBottom: '10px', fontSize: '14px', fontWeight: '600' }}>
+                                  💡 Solution Approach
+                                </h5>
+                                <button
+                                  style={{
+                                    padding: '8px 14px',
+                                    background: 'rgba(16, 185, 129, 0.2)',
+                                    color: '#10b981',
+                                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '12px',
+                                    transition: 'all 0.3s ease'
+                                  }}
+                                  onClick={() => {
+                                    // naive display of solution if stored on problem
+                                    alert(prob.solution || 'Solution not provided');
+                                  }}
+                                >
+                                  View solution
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

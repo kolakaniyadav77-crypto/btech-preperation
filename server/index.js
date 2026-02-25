@@ -20,27 +20,9 @@ app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
 // Environment variables expected (server-side):
-// - JUDGE0_RAPIDAPI_KEY
-// - GOOGLE_API_KEY (or GEMINI key)
+// - GOOGLE_API_KEY (or GEMINI key for AI features)
 
-const JUDGE0_API_URL = 'https://judge0-ce.p.rapidapi.com/submissions';
-const JUDGE0_RAPIDAPI_KEY = process.env.JUDGE0_RAPIDAPI_KEY || process.env.REACT_APP_JUDGE0_API_KEY || process.env.VITE_JUDGE0_API_KEY || '';
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.VITE_GOOGLE_API_KEY || process.env.REACT_APP_GOOGLE_API_KEY || '';
-
-// language id map (subset)
-const languageMap = {
-  Python: 71,
-  Java: 62,
-  JavaScript: 63,
-  'C++': 53,
-  C: 49,
-  Go: 60,
-  Rust: 73,
-  'C#': 51,
-  PHP: 68,
-  Ruby: 72,
-  TypeScript: 74,
-};
 
 // ============ PERSISTENT USER DATABASE ============
 
@@ -178,74 +160,41 @@ app.get('/api/auth/users', (req, res) => {
 });
 
 // ============ CODE COMPILATION ENDPOINT ============
+// Simplified backend that forwards code to the Piston execution service.
+// Piston supports a very wide range of languages (python3, java, cpp, c, javascript,
+// go, rust, csharp, php, ruby, kotlin, swift, r, etc.).  No API key is required;
+// the frontend merely needs to send the desired Piston language string.
 
 app.post('/api/compile', async (req, res) => {
   try {
-    const { code = '', language = 'Python', input = '' } = req.body;
+    const { code = '', language = 'python3', input = '' } = req.body;
 
-    if (!JUDGE0_RAPIDAPI_KEY) {
-      return res.status(400).json({ success: false, error: 'Judge0 API key missing on server. Set JUDGE0_RAPIDAPI_KEY in server env.' });
-    }
+    // forward request to Piston API
+    const pistonResp = await axios.post('https://emkc.org/api/v2/piston/execute', {
+      language,
+      version: '*',
+      files: [{ name: 'main', content: code }],
+      stdin: input || '',
+    }, { timeout: 20000 });
 
-    const languageId = languageMap[language];
-    if (!languageId) return res.status(400).json({ success: false, error: `Language ${language} not supported` });
-
-    // create submission
-    const createResp = await axios.post(`${JUDGE0_API_URL}?base64_encoded=true&wait=false`, {
-      language_id: languageId,
-      source_code: Buffer.from(code).toString('base64'),
-      stdin: Buffer.from(input).toString('base64'),
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-RapidAPI-Key': JUDGE0_RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
-      }
-    });
-
-    const token = createResp.data.token;
-
-    // poll result
-    let attempts = 0;
-    const maxAttempts = 30;
-    let result = null;
-
-    while (attempts < maxAttempts) {
-       
-      await new Promise(r => setTimeout(r, 1000));
-       
-      const getResp = await axios.get(`${JUDGE0_API_URL}/${token}?base64_encoded=true`, {
-        headers: {
-          'X-RapidAPI-Key': JUDGE0_RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
-        }
+    const data = pistonResp.data;
+    if (data.run) {
+      return res.json({
+        success: true,
+        output: data.run.stdout || '',
+        error: data.run.stderr || '',
+        executionTime: data.run.time || '',
       });
-      const data = getResp.data;
-      if (data.status && data.status.id > 2) {
-        result = data;
-        break;
-      }
-      attempts++;
     }
 
-    if (!result) return res.status(504).json({ success: false, error: 'Execution timeout' });
+    if (data.compile) {
+      return res.json({ success: false, output: '', error: data.compile.stderr || '' });
+    }
 
-    const output = result.stdout ? Buffer.from(result.stdout, 'base64').toString('utf8') : '';
-    const stderr = result.stderr ? Buffer.from(result.stderr, 'base64').toString('utf8') : '';
-    const compile_output = result.compile_output ? Buffer.from(result.compile_output, 'base64').toString('utf8') : '';
-
-    return res.json({
-      success: result.status.id === 3,
-      output: output,
-      error: stderr || compile_output,
-      statusId: result.status.id,
-      statusDescription: result.status.description,
-      executionTime: result.time,
-      memory: result.memory,
-    });
+    return res.status(500).json({ success: false, error: 'Unexpected response from compiler backend' });
   } catch (err) {
-    console.error('Compile proxy error', err?.response?.data || err.message || err);
-    return res.status(500).json({ success: false, error: 'Server compile error' });
+    console.error('Compile error', err.message || err);
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
 });
 

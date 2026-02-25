@@ -20,7 +20,9 @@ const CodeEditor = ({
   const [showOutput, setShowOutput] = useState(false);
   const [compilerStatus, setCompilerStatus] = useState(null); // { piston: 'ok'|'error', ... }
 
-  const languages = ['Python', 'JavaScript', 'Java', 'C++', 'C#', 'Ruby', 'Go', 'Rust'];
+  // available languages are pulled from the compiler service so that adding new compilers
+  // automatically updates every UI component.
+  const languages = codeCompilerService.getSupportedLanguages();
 
   const handleCodeChange = (e) => {
     const newCode = e.target.value;
@@ -106,6 +108,23 @@ const CodeEditor = ({
     alert('Code copied to clipboard!');
   };
 
+  // determine if selected language can actually run given current compiler statuses
+  const languageHasLocalFallback = (lang) => {
+    if (!lang) return false;
+    return lang === 'JavaScript' || lang === 'Python';
+  };
+
+  const canRunLanguage = () => {
+    if (!showCompiler) return false;
+    if (!compilerStatus) return true; // assume available until we know otherwise
+
+    const anyRemoteOk = ['server', 'piston', 'jdoodle', 'rapidapi'].some(k => compilerStatus[k] === 'ok');
+    const hasLocal = languageHasLocalFallback(selectedLanguage) &&
+      ((selectedLanguage === 'JavaScript' && compilerStatus['js-local'] === 'ok') ||
+       (selectedLanguage === 'Python' && compilerStatus['python-local'] === 'ok'));
+    return anyRemoteOk || hasLocal;
+  };
+
   // check compiler status when component mounts (if compiler UI is shown)
   useEffect(() => {
     if (!showCompiler) return;
@@ -120,9 +139,21 @@ const CodeEditor = ({
 
   const codeEditorContent = (
     <div className="code-editor-wrapper">
-      {(compilerStatus && Object.values(compilerStatus).every(v => v !== 'ok')) && (
+      {/* show warning only if *no* remote/server backends are reachable; JS-local always reports ok */}
+      {(compilerStatus &&
+        !(
+          compilerStatus.server === 'ok' ||
+          compilerStatus.piston === 'ok' ||
+          compilerStatus.jdoodle === 'ok' ||
+          compilerStatus.rapidapi === 'ok' ||
+          compilerStatus['python-local'] === 'ok'
+        ) &&
+        // if we don't even have a js-local status (old versions), fall back to old check
+        Object.values(compilerStatus).every(v => v !== 'ok')
+      ) && (
         <div className="compiler-warning-banner">
-          ⚠️ All code compilation backends are currently unreachable. Please check your internet connection, ensure the backend server is running, or try again later.
+          ⚠️ Remote compilation backends are currently unreachable. Only JavaScript and/or in-browser Python will run locally.
+          Please check your internet connection or ensure the backend server is running.
         </div>
       )}
       <div className="editor-header">
@@ -153,11 +184,11 @@ const CodeEditor = ({
           <button 
             className="btn btn-execute" 
             onClick={handleExecute}
-            disabled={isExecuting || !showCompiler || (compilerStatus && Object.values(compilerStatus).every(v => v !== 'ok'))}
+            disabled={isExecuting || !showCompiler || !canRunLanguage()}
             title={
               !showCompiler ? 'Compiler not available' :
-              (compilerStatus && Object.values(compilerStatus).every(v => v !== 'ok'))
-                ? 'All backends appear down' :
+              !canRunLanguage() ?
+                `Execution unavailable: remote services down for ${selectedLanguage}. Only JavaScript/Python run locally.` :
                 'Execute Code'
             }
           >

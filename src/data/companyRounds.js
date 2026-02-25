@@ -1,4 +1,5 @@
 import generatePracticeQuestions from "../utils/practiceGenerator";
+import { companyCodingProblems } from "./companyCodingProblems";
 
 export const companyRounds = {
   Amazon: [
@@ -2529,6 +2530,18 @@ _ensureCompanies.forEach((name) => {
       }
     ];
   }
+});
+
+// automatically append a coding round to every company using the problems file
+Object.keys(companyRounds).forEach(name => {
+  companyRounds[name].push({
+    round: "Coding Round",
+    type: "Technical",
+    resources: [
+      { title: "Practice Problems", link: "#coding-section" }
+    ],
+    codingProblems: companyCodingProblems[name] || []
+  });
 });
 
 export default companyRounds;

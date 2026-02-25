@@ -70,7 +70,8 @@ AI Chatbot:
   - JavaScript/TypeScript → `new Function(code)()` executed client-side (instant, 0.001s)
   - Python/Java/C++/etc → POST `/api/compile` to backend → Judge0 (2-10s typical, includes queue time)
 - Backend handles base64 encoding, Judge0 polling, error handling, response normalization
-- Language ID mapping in `server/index.js` languageMap (Python=71, Java=62, JavaScript=63, etc.)
+- Language ID mapping in `server/index.js` languageMap (Python=71, Java=62, JavaScript=63, etc.). New languages such as Kotlin and Swift have been added; verify the correct Judge0 IDs when deploying.
+- Frontend language dropdowns are no longer hard‑coded arrays; components call `codeCompilerService.getSupportedLanguages()` so adding a compiler automatically propagates throughout the UI.
 - Response format: `{success: true, output: "...", executionTime: "2.5s"}` or `{success: false, error: "SyntaxError: ..."}`
 + **Tip:** compilers will error out if neither Piston nor Jdoodle nor a running server is reachable. Ensure you have internet access and start the backend with a valid `JUDGE0_RAPIDAPI_KEY` (see “Environment + Secrets” section), then reload the frontend to clear the banner.
 
