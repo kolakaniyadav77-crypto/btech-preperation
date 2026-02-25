@@ -12,7 +12,7 @@ export default defineConfig({
     middlewareMode: false,
     allowedHosts: [
     
-  'https://your-project.vercel.app',
+  'https://btech-preperation.vercel.app',
   
 
       'localhost',
