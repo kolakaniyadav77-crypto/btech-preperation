@@ -1,5 +1,5 @@
 // Enhanced Code Compiler Service
-// Single reliable backend (server/Piston) with light local fallbacks
+// Single reliable backend (backend/Piston) with light local fallbacks
 // ========================================================
 
 export const languageMap = {

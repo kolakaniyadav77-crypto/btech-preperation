@@ -1,6 +1,10 @@
 -- =====================================================
 -- CREATE USERS TABLE IN SUPABASE (Fixed Version)
 -- =====================================================
+-- NOTE: the project backend has been migrated to Spring Boot with an
+-- H2 in-memory database.  This SQL file remains for Supabase-related
+-- instructions but is not used by the local Spring backend.
+-- =====================================================
 -- Run this SQL in your Supabase dashboard to enable
 -- the Admin Panel to show all users
 -- 

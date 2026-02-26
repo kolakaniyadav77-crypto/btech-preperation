@@ -12,19 +12,15 @@
     "deploy:ngrok:dev": "ngrok http 5173",
     "deploy:ngrok:prod": "ngrok http 4173",
     "serve": "npm run build && npm run preview",
-    "start:server": "node server/index.js",
-    "check-links": "node scripts/linkChecker.js"
+
+    "check-links": "node scripts/linkChecker.js",
+    "start:backend": "cd backend && mvn spring-boot:run"
   },
   "dependencies": {
     "@google/generative-ai": "^0.3.0",
     "@supabase/supabase-js": "^2.95.1",
-    "axios": "^1.6.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
     "js-tokens": "^10.0.0",
     "lucide-react": "^0.563.0",
-    "node-fetch": "^3.3.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^8.0.5",

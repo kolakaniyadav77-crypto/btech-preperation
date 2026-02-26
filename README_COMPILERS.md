@@ -9,7 +9,7 @@ The project now supports multiple code execution backends with intelligent fallb
    - Falls back to **local execution** using installed tools when the network/API key is missing.
    - Local languages supported by default: Python, JavaScript (Node), C, C++ (requires `gcc`/`g++`).
    - *Browser‑only users* get an additional Python interpreter via **Pyodide** (WASM) – the front-end automatically loads it when needed, so Python code runs even with no internet or server. The runtime captures both printed output and the value of a lone expression (so `1+1` yields `2` without `print()`).
-   - Add more languages by editing `server/index.js` -> `executeLocally` (note: Pyodide only handles Python). For an even stronger offline experience you can also integrate additional WASM-based interpreters/compilers directly in the frontend the same way Pyodide is wired up.
+   - Add more languages by editing the backend controller that forwards requests to Piston (previously `server/index.js`).  The Spring Boot project lives under `backend/` now.  For local execution you can also integrate additional WASM-based interpreters/compilers directly in the frontend the same way Pyodide is wired up.
 
 2. **Piston API** (https://emkc.org/api/v2/piston/execute) – primary remote executor.
 3. **Jdoodle API** – fallback remote executor.
@@ -31,7 +31,7 @@ The project now supports multiple code execution backends with intelligent fallb
 
 To run compilers without an internet connection:
 
-1. Start the server (`node server/index.js`).
+1. Start the backend (`cd backend && mvn spring-boot:run` or run the generated jar).  It listens on port 4000 by default.
    - by default it listens on port 4000; make sure nothing else is occupying the port.  An `EADDRINUSE` error means another process is already bound (perhaps a previous run).
    - you can kill the existing process or change the port by setting `PORT` in your environment.
 2. Ensure the required local tooling is installed (Python, Node, gcc, etc.).

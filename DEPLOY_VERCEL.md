@@ -38,9 +38,9 @@ vercel env add VITE_SUPABASE_ANON_KEY production
 ```
 
 Notes & gotchas
-- This is a static frontend build. If you rely on the Express server in `server/index.js`, Vercel's serverless functions are not the same as a long-running Express server. Options:
-  - Move server endpoints to Vercel Serverless Functions under `/api`.
-  - Deploy the Express server separately (Render, Fly, Railway) and update client to use that URL.
+- This is purely a static frontend build. The backend now lives in `backend/` as a Spring Boot application. Vercel’s static hosting cannot run a JVM service; you have two options:
+  1. Deploy the Spring Boot jar on a separate host (Heroku, Railway, AWS, etc.) and point the frontend to its URL.
+  2. Re‑implement necessary endpoints as Vercel Serverless Functions under `/api` if you want a single deployment.
 
 - Ensure `.env` (with secrets) is NOT committed. Use Vercel env vars instead.
 

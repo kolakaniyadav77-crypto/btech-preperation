@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import supabase from '../services/supabaseClient';
 
 // Create Auth Context
 const AuthContext = createContext();
+
+// Use a relative API base in dev so Vite proxy can forward requests and avoid CORS.
+// When building for production, this resolves to the deployed backend base (set via environment reverse proxy).
+const API_BASE_URL = '/api';
 
 // Auth Provider Component
 export const AuthProvider = ({ children }) => {
@@ -13,117 +16,55 @@ export const AuthProvider = ({ children }) => {
   // Check if user is already logged in on mount
   useEffect(() => {
     checkUser();
-
-    // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        const userData = {
-          id: session.user.id,
-          email: session.user.email,
-          fullName: session.user.user_metadata?.full_name || '',
-          createdAt: session.user.created_at,
-          photoURL: session.user.user_metadata?.avatar_url || null
-        };
-        setCurrentUser(userData);
-        localStorage.setItem('education_path_current_user', JSON.stringify(userData));
-      } else {
-        setCurrentUser(null);
-        localStorage.removeItem('education_path_current_user');
-      }
-    });
-
-    return () => subscription?.unsubscribe();
   }, []);
 
   const checkUser = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const userData = {
-          id: session.user.id,
-          email: session.user.email,
-          fullName: session.user.user_metadata?.full_name || '',
-          createdAt: session.user.created_at,
-          photoURL: session.user.user_metadata?.avatar_url || null
-        };
+      const storedUser = localStorage.getItem('education_path_current_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
         setCurrentUser(userData);
-        localStorage.setItem('education_path_current_user', JSON.stringify(userData));
       }
     } catch (err) {
       console.error('Error checking user:', err);
+      localStorage.removeItem('education_path_current_user');
     } finally {
       setLoading(false);
     }
   };
 
-  // Sign Up Function - with Supabase
+  // Sign Up Function - with Spring Boot Backend
   const signUp = async (email, password, fullName) => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName
-          },
-          emailRedirectTo: `${window.location.origin}/`
-        }
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName
+        })
       });
 
-      if (signUpError) {
-        console.error('Signup error:', signUpError);
-        setError(signUpError.message);
-        return { error: { message: signUpError.message } };
-      }
+      const data = await response.json();
 
-      // Auto sign in after signup - THIS IS CRITICAL
-      let sessionData = data;
-      if (data.user && !data.user.user_metadata?.email_verified) {
-        console.log('🔐 Email verification not required, auto-logging in...');
-        // Try to auto-login to establish session
-        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        if (loginError) {
-          console.error('❌ Auto-login error:', loginError.message);
-          // Even if auto-login fails, proceed with signup - user can login manually
-        } else {
-          console.log('✅ Auto-login successful, session established');
-          sessionData = loginData;
-        }
+      if (!response.ok) {
+        console.error('Signup error:', data.message);
+        setError(data.message);
+        return { error: { message: data.message || 'Signup failed' } };
       }
 
       const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        fullName: fullName,
-        createdAt: data.user.created_at,
-        photoURL: null
+        id: data.id,
+        email: data.email,
+        fullName: data.fullName,
+        createdAt: data.createdAt,
+        photoURL: data.photoURL || null
       };
-
-      // Try to save user to users table (for admin panel)
-      try {
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-            full_name: fullName,
-            created_at: new Date().toISOString()
-          });
-        
-        if (insertError) {
-          console.error('❌ Error inserting user to users table:', insertError);
-        } else {
-          console.log('✅ User saved to users table:', data.user.id);
-        }
-      } catch (tableErr) {
-        console.error('❌ Exception saving to users table:', tableErr.message);
-      }
 
       localStorage.setItem('education_path_current_user', JSON.stringify(userData));
       // ALWAYS clear welcome flag on signup so it shows on next login
@@ -170,58 +111,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Sign In Function - with Supabase
+  // Sign In Function - with Spring Boot Backend
   const signIn = async (email, password) => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
       });
 
-      if (signInError) {
-        setError(signInError.message);
-        return { error: { message: signInError.message } };
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Login error:', data.message);
+        setError(data.message);
+        return { error: { message: data.message || 'Invalid email or password' } };
       }
 
       const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        fullName: data.user.user_metadata?.full_name || '',
-        createdAt: data.user.created_at,
-        photoURL: data.user.user_metadata?.avatar_url || null
+        id: data.id,
+        email: data.email,
+        fullName: data.fullName,
+        createdAt: data.createdAt,
+        photoURL: data.photoURL || null
       };
-
-      // Try to save user to users table if not already there
-      try {
-        const { data: existingUser, error: checkError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', data.user.id)
-          .limit(1);
-        
-        if (checkError) {
-          console.error('❌ Error checking user:', checkError);
-        } else if (!existingUser || existingUser.length === 0) {
-          const { error: insertError } = await supabase.from('users').insert({
-            id: data.user.id,
-            email: data.user.email,
-            full_name: data.user.user_metadata?.full_name || '',
-            created_at: new Date().toISOString()
-          });
-          
-          if (insertError) {
-            console.error('❌ Error inserting user to table:', insertError);
-          } else {
-            console.log('✅ User saved to users table on login:', data.user.id);
-          }
-        } else {
-          console.log('✅ User already in users table:', data.user.id);
-        }
-      } catch (tableErr) {
-        console.error('❌ Exception saving to users table:', tableErr.message);
-      }
 
       localStorage.setItem('education_path_current_user', JSON.stringify(userData));
       // ALWAYS clear welcome flag on login so it shows right away
@@ -266,9 +186,6 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     setLoading(true);
     try {
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) throw signOutError;
-      
       localStorage.removeItem('education_path_current_user');
       setCurrentUser(null);
       setError(null);
@@ -286,33 +203,17 @@ export const AuthProvider = ({ children }) => {
   const deleteUser = async (userId) => {
     setLoading(true);
     try {
-      // Delete user from users table first
-      const { error: tableError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
-      
-      if (tableError) {
-        console.error('Error deleting from users table:', tableError);
-      }
+      const response = await fetch(`${API_BASE_URL}/auth/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
 
-      // Delete user from Supabase auth
-      // Note: This requires service role with admin privileges
-      // For now, we'll call a backend endpoint to delete the user
-      try {
-        const response = await fetch('/api/delete-user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId })
-        });
-        
-        if (!response.ok) {
-          console.error('Backend delete failed:', response.statusText);
-        }
-      } catch (fetchErr) {
-        console.error('Failed to call delete endpoint:', fetchErr);
+      if (!response.ok) {
+        console.error('Backend delete failed:', response.statusText);
+        return { error: { message: 'Failed to delete user' } };
       }
 
       // If deleting current user, sign them out

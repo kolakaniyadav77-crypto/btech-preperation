@@ -1,110 +1,81 @@
-# 🎉 Backend Implementation Complete
+# 🎉 Backend Migration Complete
 
-## Summary of Changes
-
-Your application now has a **fully functional backend with persistent user authentication**. Here's what was implemented:
+The old Node/Express service has been replaced with a **Spring Boot backend** using an H2 in‑memory database. The new backend exposes the same `/api/*` routes and remains transparent to the frontend.
 
 ---
 
-## ✅ What Was Built
+## ✅ Key Changes
 
-### 1. **Node.js Express Backend** (`server/index.js`)
-- RESTful API for user authentication
-- File-based persistent storage (`server/users.json`)
-- Runs on port 4000
-- Auto-initializes with demo user on first start
-
-### 2. **Authentication Endpoints**
-```
-POST   /api/auth/signup   → Register new users
-POST   /api/auth/login    → Login users  
-GET    /api/auth/users    → Get all users (admin)
-```
-
-### 3. **Persistent Data Storage**
-- `server/users.json` - Stores all registered users
-- Data survives server restarts
-- Works across different localhost ports and IP addresses
-
-### 4. **Updated Frontend**
-- `AuthContext.jsx` - Now calls real backend API
-- `AdminPanel.jsx` - Fetches users from backend
-- `.env.local` - Configurable backend URL
+- **New backend folder:** `backend/` contains a Spring Boot application.
+- **Database:** switched from file‑based `server/users.json` to H2 (in‑memory by default), configured in `application.properties`.
+- **Ports:** backend still listens on port `4000` (change with `server.port`).
+- **Authentication endpoints:** same routes available via JPA entities.
+- **Compile proxy:** `/api/compile` now handled by a Spring controller forwarding to the Piston API.
+- **Old Node dependencies and scripts removed.**
+- **Documentation updated** across the repository to reflect Spring implementation.
 
 ---
 
-## 🏗️ Architecture Diagram
+## 📦 Backend Structure
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     REACT FRONTEND                      │
-│  (localhost:5173)                                       │
-├─────────────────────────────────────────────────────────┤
-│  AuthContext.jsx                                        │
-│  - Uses fetch() to call backend API                     │
-│  - Stores current user in localStorage                  │
-│                                                         │
-│  AdminPanel.jsx                                         │
-│  - Fetches user list from backend                       │
-│  - Displays /api/auth/users                             │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-                       │ HTTP/JSON
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│              EXPRESS.JS BACKEND                         │
-│  (localhost:4000)                                       │
-├─────────────────────────────────────────────────────────┤
-│  server/index.js                                        │
-│  - /api/auth/signup   ── Creates user                   │
-│  - /api/auth/login    ── Authenticates user             │
-│  - /api/auth/users    ── Returns all users              │
-│  - /api/compile       ── Compiles code (existing)       │
-│  - /api/generate      ── AI generation (existing)       │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-                       ▼
-         ┌─────────────────────────────┐
-         │   server/users.json         │
-         │  (Persistent Storage)       │
-         │  - Auto-created on start    │
-         │  - Survives restarts        │
-         │  - JSON array of users      │
-         └─────────────────────────────┘
+backend/
+├─ pom.xml                     # Maven build file with Spring Boot
+├─ src/main/java/com/tejas/backend/
+│   ├─ BackendApplication.java  # entry point
+│   ├─ controller/
+│   │   ├─ AuthController.java
+│   │   └─ CompileController.java
+│   ├─ model/User.java          # JPA entity
+│   └─ repository/UserRepository.java
+└─ src/main/resources/
+    └─ application.properties  # H2 config, port, CORS
 ```
+
+The application is ready to run with `mvn spring-boot:run` (requires JDK & Maven).
 
 ---
 
-## 📋 Feature Checklist
+## 🔄 How It Works
 
-- [x] User registration (signup)
-- [x] User login with credentials
-- [x] Backend API for auth
-- [x] Persistent user storage
-- [x] Data survives server restart
-- [x] Admin panel fetches from backend
-- [x] Demo user auto-created
-- [x] Works across different ports
-- [x] CORS enabled for frontend
-- [x] Error handling
+1. React frontend sends requests to `/api/auth/*` or `/api/compile`.
+2. Spring controllers process JSON payloads and interact with H2 via JPA.
+3. User records are stored in H2 and can be inspected at `/h2-console`.
+4. Code compilation requests are forwarded to the remote Piston API exactly as before.
+
 
 ---
 
-## 🚀 Running Everything
+## 🏁 Running Locally
 
-### Terminal 1 - Start Backend
+### Start the backend (from project root):
 ```bash
-npm run start:server
+cd backend
+mvn spring-boot:run
 ```
-✅ Listens on `http://localhost:4000`  
-✅ Creates `server/users.json` automatically
 
-### Terminal 2 - Start Frontend  
+> or build a jar: `mvn package && java -jar target/backend-1.0.0.jar`
+
+### Start the frontend:
 ```bash
+npm install
 npm run dev
 ```
-✅ Listens on `http://localhost:5173`  
-✅ Connects to backend on port 4000
+
+The frontend at `http://localhost:5173` will communicate with the backend on `http://localhost:4000`.
+
+---
+
+## 🔐 Demo Account
+
+A default user is automatically created in H2 on first launch:
+
+```
+Email:    demo@example.com
+Password: Demo@123!
+```
+
+You can view the record using the H2 console (`http://localhost:4000/h2-console`, JDBC URL `jdbc:h2:mem:testdb`).
 
 ---
 
@@ -320,7 +291,7 @@ VITE_API_URL=http://192.168.1.100:4000  # For different machine
 - `src/components/LogIn.jsx` - See auth integration
 
 **Backend Implementation**:
-- `server/index.js` - Express routes & database logic
+- `backend/` - Spring Boot application with controllers, JPA/H2 user store and compiler proxy
 
 ---
 

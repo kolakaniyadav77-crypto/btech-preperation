@@ -11,6 +11,15 @@ export default defineConfig({
     port: 5180,
     strictPort: false,
     middlewareMode: false,
+    // Dev proxy: forward `/api` calls to backend to avoid CORS during development
+    proxy: {
+      '/api': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
+      }
+    },
     allowedHosts: [
     
   'https://btech-preperation.vercel.app',

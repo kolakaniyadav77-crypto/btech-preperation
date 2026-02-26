@@ -7,20 +7,21 @@
 ```bash
 npm install
 npm run dev              # Frontend (Vite) on localhost:5180
-npm run start:server     # Backend (Express) on localhost:4000
+npm run start:backend    # Backend (Spring Boot) on localhost:9000 (see application.properties)
+
 npm run build            # Production build to /dist
 npm run serve            # Build + preview on :4173
 npm run lint             # ESLint check
 npm run deploy:ngrok:dev # Expose :5173 via ngrok (dev build)
 ```
 
-**Critical:** Two-terminal setup needed — run `npm run dev` (frontend) AND `npm run start:server` (backend) simultaneously in separate terminals.
+**Critical:** Two‑terminal setup needed — run `npm run dev` (frontend) AND `npm run start:backend` (or launch the Spring jar) in another terminal.
 
 ## Architecture & Data Flow
 
 **Three-Layer System:**
 - **React Frontend (Vite, :5180):** 30+ page components (Placement, DSA, Career paths, Chatbot, Resume builder, etc.), protected routes via AuthContext, client state in localStorage + React context
-- **Express Backend (:4000):** REST API `/api/*`, code execution proxy to Judge0, persistent file-based user DB (`server/users.json`), email simulation
+- **Spring Boot Backend (:9000 by default):** REST API `/api/*` (context path `/api` set in `application.properties`), code execution proxy to Piston, H2 in-memory user database (replaces `server/users.json`), email simulation still not relevant
 - **External Services:** Supabase (OAuth auth, user metadata), Judge0 RapidAPI (code compilation), Google Gemini API (AI fallback)
 
 **Core Data Flows:**
@@ -197,6 +198,8 @@ Open browser → localhost:5180 → DevTools:
 | Issue | Diagnosis | Fix |
 |-------|-----------|-----|
 | "No current user" | AuthContext not fully loaded | Add `if (!currentUser?.id) return;` guards; auth resolves on mount |
+| CORS error on login/signup | Backend context path mismatch or CORS filter not applied | Ensure controllers use relative paths (`/auth`, `/compile`) when context-path `/api` is set; restart backend and check `WebConfig` maps `/**` with allowed origins; also verify Vite dev proxy is running (restart `npm run dev` if you modify `vite.config.js`) |
+| Backend on wrong port | README mentions 4000 but config uses 9000 | Update `API_BASE_URL` in `AuthContext` or modify `application.properties` to desired port |
 | Judge0 timeout | Network/queue delay | Increase UI spinner timeout to 15s; Judge0 free tier slower |
 | Progress not saving | User missing/logged out | Verify `currentUser?.id` exists before `updateSectionProgress()` |
 | Env vars not working | Vite caches old values | Restart `npm run dev` after changing `.env.local` |
