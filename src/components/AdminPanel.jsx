@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import supabase from '../services/supabaseClient';
 import '../styles/AdminPanel.css';
 import '../styles/DeleteConfirmModal.css';
 
@@ -22,97 +21,30 @@ export default function AdminPanel() {
   const loadUsers = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // Try to fetch from the users table
-      let usersList = [];
-      let tableError = null;
-
-      // Attempt 1: Try standard query
-      try {
-        const { data: tableUsers, error: err } = await supabase
-          .from('users')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (!err && tableUsers && tableUsers.length > 0) {
-          console.log('✅ Successfully fetched users from table:', tableUsers);
-          usersList = tableUsers.map(u => ({
-            id: u.id || u.user_id,
-            email: u.email || 'N/A',
-            fullName: u.full_name || u.fullName || 'N/A',
-            createdAt: u.created_at || u.created || 'N/A'
-          }));
-          setUsers(usersList);
-          setFilteredUsers(usersList);
-          setError('');
-          setLoading(false);
-          return;
-        } else if (err) {
-          console.warn('Query error:', err.message);
-          tableError = err;
-        }
-      } catch (e) {
-        console.warn('Attempt 1 failed:', e.message);
+      // Fetch users from Spring Boot backend
+      const response = await fetch('/api/auth/users');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-
-      // Attempt 2: Try without ordering if Attempt 1 failed
-      try {
-        const { data: tableUsers, error: err } = await supabase
-          .from('users')
-          .select('id, email, full_name, created_at');
-
-        if (!err && tableUsers && tableUsers.length > 0) {
-          console.log('✅ Fetched users (Attempt 2):', tableUsers);
-          usersList = tableUsers.map(u => ({
-            id: u.id,
-            email: u.email || 'N/A',
-            fullName: u.full_name || 'N/A',
-            createdAt: u.created_at || 'N/A'
-          }));
-          setUsers(usersList);
-          setFilteredUsers(usersList);
-          setError('');
-          setLoading(false);
-          return;
-        }
-      } catch (e) {
-        console.warn('Attempt 2 failed:', e.message);
-      }
-
-      // If no data found, show currently logged in user
-      const storedUser = localStorage.getItem('education_path_current_user');
-      if (storedUser) {
-        try {
-          const currentUser = JSON.parse(storedUser);
-          if (currentUser && currentUser.id) {
-            usersList = [{
-              id: currentUser.id,
-              email: currentUser.email,
-              fullName: currentUser.fullName || 'N/A',
-              createdAt: currentUser.createdAt
-            }];
-            
-            setUsers(usersList);
-            setFilteredUsers(usersList);
-            
-            // Show helpful error message
-            if (tableError) {
-              setError(`⚠️ Using logged-in user only. Table error: ${tableError.message}. Enable RLS policies to show all users.`);
-            } else {
-              setError('ℹ️ Table not found or empty. Showing currently logged-in user. Create a "users" table to see all registered users.');
-            }
-          }
-        } catch (e) {
-          setError('❌ Table error: ' + (tableError?.message || e.message));
-        }
-      } else {
-        setError('❌ No users table found and no logged-in user. Please sign up first.');
-        setUsers([]);
-        setFilteredUsers([]);
-      }
+      
+      const usersList = await response.json();
+      
+      // Transform backend response to match component state shape
+      const transformedUsers = usersList.map(u => ({
+        id: u.id,
+        email: u.email || 'N/A',
+        fullName: u.fullName || 'N/A',
+        createdAt: u.createdAt || 'N/A'
+      }));
+      
+      setUsers(transformedUsers);
+      setFilteredUsers(transformedUsers);
+      
     } catch (err) {
-      console.error('Admin Panel Error:', err);
-      setError('❌ Error: ' + (err.message || 'Failed to load users'));
+      console.error('Failed to load users from backend:', err);
+      setError('❌ Error loading users: ' + (err.message || 'Failed to load users'));
       setUsers([]);
       setFilteredUsers([]);
     } finally {

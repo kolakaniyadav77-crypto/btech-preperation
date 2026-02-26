@@ -119,24 +119,74 @@ AI Chatbot:
 ```
 VITE_GOOGLE_API_KEY=<Gemini API key from Google AI Studio>
 VITE_JUDGE0_API_KEY=<Judge0 RapidAPI free tier key>
-VITE_SUPABASE_URL=<Supabase project URL>
-VITE_SUPABASE_ANON_KEY=<Supabase anon (public) key>
-VITE_API_BASE_URL=/api               # optional override in production
+VITE_SUPABASE_URL=<Supabase project URL>        # optional, remove if no Supabase use
+VITE_SUPABASE_ANON_KEY=<Supabase anon key>      # optional
+VITE_API_BASE_URL=/api               # required; may be an absolute URL in prod
 ```
-- Access via `import.meta.env.VITE_*` (NOT `process.env`). **Restart `npm run dev` after adding/updating VITE_* variables.**
-- `VITE_API_BASE_URL` can be a full URL (`https://backend.example.com/api`) or
-  `/api` when using proxy/rewrites. A leading slash is required; the code
-  normalizes it automatically.
+- The frontend reads from `import.meta.env.VITE_*` (NOT `process.env`).
+- `VITE_API_BASE_URL` must start with a slash; the code auto‑normalizes if you
+  accidentally drop it. This value is baked into the build, so changing it
+  requires a redeploy.
+- In development `/api` is proxied by Vite to `http://localhost:9000`.
+  In production you can either keep `/api` and use a rewrite rule (see
+  `vercel.json` example below), or set the full backend URL (`https://.../api`).
 
-**Important:** Supabase keys must include the full project URL and anon key for OAuth to work. Get from Supabase dashboard → Settings → API.
 
-**Backend (`.env`):**
+**Backend environment (`.env` or hosting‑specific vars):**
 ```
-PORT=4000
-JUDGE0_RAPIDAPI_KEY=<Judge0 RapidAPI key - get from https://rapidapi.com/judge0-official/api/judge0-ce or use Jdoodle as fallback>
-GOOGLE_API_KEY=<same Gemini API key or GEMINI_API_KEY>
+# network configuration
+PORT=9000          # default, overridden by many cloud platforms
+SPRING_DATASOURCE_URL=jdbc:h2:mem:testdb  # LOCAL ONLY, in‑memory H2
+# for production use a persistent store:
+# SPRING_DATASOURCE_URL=jdbc:h2:file:./data/db
+# SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/dbname
+# SPRING_DATASOURCE_USERNAME=user
+# SPRING_DATASOURCE_PASSWORD=pass
+
+JUDGE0_RAPIDAPI_KEY=<Judge0 API key>
+GOOGLE_API_KEY=<Gemini API key>
 ```
-The backend auto-detects multiple env var names: handles JUDGE0_RAPIDAPI_KEY, VITE_JUDGE0_API_KEY, or REACT_APP_JUDGE0_API_KEY. Same flexibility for Google API key. **Important:** if JUDGE0_RAPIDAPI_KEY is not set, the `/api/compile` endpoint will return an error and the frontend will fall back to Piston or Jdoodle APIs. The CodeEditor will show a warning banner if all backends are unreachable.
+- **H2 in-memory is ephemeral**; it is fine for STS/local dev but *every JVM
+  restart clears all data*. Do **not** use this in production unless you
+  deliberately want a fresh database on each deploy.
+- To persist data on disk (still H2) switch to `jdbc:h2:file:...` or better
+  yet migrate to a real database (Postgres/MySQL) and update the URL plus
+  add username/password env vars and the appropriate JDBC driver dependency
+  in `backend/pom.xml`.
+- When deploying the backend to a remote host, set these same variables using
+  the platform’s configuration panel (Heroku config, Render environment, etc.)
+  rather than committing them to source.
+- The backend recognizes both `JUDGE0_RAPIDAPI_KEY` and `VITE_JUDGE0_API_KEY`
+  (and similarly for the Google key), making local development easier.
+- If the compile key is missing the `/api/compile` endpoint will return an
+  error and the frontend will fall back to its built‑in compilers; you’ll see
+  a warning banner in the CodeEditor component.
+
+**Persistent database & deployment notes**
+1. Choose a hosting provider capable of running Java (Render, Heroku, VPS,
+   etc.). Build the jar with `mvn package` and run it there.
+2. Configure the provider to expose the app on a public URL and set
+   `PORT` accordingly (the app reads `server.port=${PORT:9000}`).
+3. Use a durable database: Postgres is the common choice. Update
+   `SPRING_DATASOURCE_URL` and add credentials; install the driver in
+   `pom.xml` if necessary.
+4. If you stick with H2 you can keep the console (`/h2-console`), but set
+   the URL to file mode (`jdbc:h2:file:./db/data;AUTO_SERVER=TRUE`) so the
+   file persists between restarts.
+5. After deployment set the frontend’s `VITE_API_BASE_URL` to point at the
+   backend’s public address and redeploy the frontend.
+
+**Vercel rewrite example** (add to `vercel.json` at repo root):
+```json
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://your-backend.example.com/api/:path*"
+    }
+  ]
+}
+```
 
 **Never commit:** `.env`, `.env.local` files; they contain secrets.
 
