@@ -121,8 +121,12 @@ VITE_GOOGLE_API_KEY=<Gemini API key from Google AI Studio>
 VITE_JUDGE0_API_KEY=<Judge0 RapidAPI free tier key>
 VITE_SUPABASE_URL=<Supabase project URL>
 VITE_SUPABASE_ANON_KEY=<Supabase anon (public) key>
+VITE_API_BASE_URL=/api               # optional override in production
 ```
-Access via `import.meta.env.VITE_*` (NOT `process.env`). **Restart `npm run dev` after adding new VITE_* variables.**
+- Access via `import.meta.env.VITE_*` (NOT `process.env`). **Restart `npm run dev` after adding/updating VITE_* variables.**
+- `VITE_API_BASE_URL` can be a full URL (`https://backend.example.com/api`) or
+  `/api` when using proxy/rewrites. A leading slash is required; the code
+  normalizes it automatically.
 
 **Important:** Supabase keys must include the full project URL and anon key for OAuth to work. Get from Supabase dashboard → Settings → API.
 
@@ -199,6 +203,7 @@ Open browser → localhost:5180 → DevTools:
 |-------|-----------|-----|
 | "No current user" | AuthContext not fully loaded | Add `if (!currentUser?.id) return;` guards; auth resolves on mount |
 | CORS error on login/signup | Backend context path mismatch or CORS filter not applied | Ensure controllers use relative paths (`/auth`, `/compile`) when context-path `/api` is set; restart backend and check `WebConfig` maps `/**` with allowed origins; also verify Vite dev proxy is running (restart `npm run dev` if you modify `vite.config.js`) |
+| 405 / unexpected empty body from `fetch` | Frontend hitting wrong host (e.g. Vercel /api route, or missing leading slash in API_BASE_URL) | Set `VITE_API_BASE_URL` to the real backend endpoint or add a platform rewrite; the code now normalizes the prefix and guards against non-JSON responses |
 | Backend on wrong port | README mentions 4000 but config uses 9000 | Update `API_BASE_URL` in `AuthContext` or modify `application.properties` to desired port |
 | Judge0 timeout | Network/queue delay | Increase UI spinner timeout to 15s; Judge0 free tier slower |
 | Progress not saving | User missing/logged out | Verify `currentUser?.id` exists before `updateSectionProgress()` |

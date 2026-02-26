@@ -3,9 +3,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 // Create Auth Context
 const AuthContext = createContext();
 
-// Use a relative API base in dev so Vite proxy can forward requests and avoid CORS.
-// When building for production, this resolves to the deployed backend base (set via environment reverse proxy).
-const API_BASE_URL = '/api';
+// Base URL for backend API. Defaults to `/api` so that the dev server can
+// proxy requests through to port 9000. In production you may override this via
+// VITE_API_BASE_URL (set in .env or on the hosting platform); values lacking a
+// leading slash will be normalized automatically.
+let API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+if (!API_BASE_URL.startsWith('/')) {
+  API_BASE_URL = '/' + API_BASE_URL;
+}
 
 // Auth Provider Component
 export const AuthProvider = ({ children }) => {
@@ -50,11 +55,16 @@ export const AuthProvider = ({ children }) => {
         })
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (err) {
+        console.warn('Signup response not JSON:', err, 'status', response.status);
+      }
 
       if (!response.ok) {
-        console.error('Signup error:', data.message);
-        setError(data.message);
+        console.error('Signup error:', data.message || response.status);
+        setError(data.message || `HTTP ${response.status}`);
         return { error: { message: data.message || 'Signup failed' } };
       }
 
@@ -127,11 +137,16 @@ export const AuthProvider = ({ children }) => {
         })
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (err) {
+        console.warn('Login response not JSON:', err, 'status', response.status);
+      }
 
       if (!response.ok) {
-        console.error('Login error:', data.message);
-        setError(data.message);
+        console.error('Login error:', data.message || response.status);
+        setError(data.message || `HTTP ${response.status}`);
         return { error: { message: data.message || 'Invalid email or password' } };
       }
 
