@@ -21,9 +21,6 @@ export default function Welcome({ onGetStarted }) {
     navigate('/dashboard');
   };
 
-  const handleLogout = () => {
-    navigate('/login');
-  };
 
   const userName = currentUser?.fullName?.split(' ')[0] || 'User';
   const fullName = currentUser?.fullName || 'Guest';
@@ -124,12 +121,6 @@ export default function Welcome({ onGetStarted }) {
               className="btn btn-primary"
             >
               🚀 Get Started
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="btn btn-secondary"
-            >
-              👋 Logout
             </button>
           </div>
 
