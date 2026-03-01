@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Sidebar from "./components/Sidebar";
+import NavigationBar from "./components/NavigationBar";
 import Dashboard from "./components/Dashboard";
 import Placement from "./components/Placement";
 import PlacementEnhanced from "./components/PlacementEnhanced";
@@ -32,7 +32,7 @@ function App() {
   const [hasSeenWelcome, setHasSeenWelcome] = useState(
     localStorage.getItem('education_path_welcome_seen') === 'true'
   );
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   // Router is always rendered so that useNavigate (and other hooks)
   // inside child components work even on the welcome page.
@@ -54,18 +54,18 @@ function App() {
             element={
               <div className="app">
                 <button
-                  className="sidebar-toggle"
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  title={sidebarOpen ? "Close Menu" : "Open Menu"}
+                  className="nav-toggle"
+                  onClick={() => setNavOpen(!navOpen)}
+                  title={navOpen ? "Close Menu" : "Open Menu"}
                 >
-                  {sidebarOpen ? '✕' : '☰'}
+                  {navOpen ? '✕' : '☰'}
                 </button>
-                <div className={`sidebar ${sidebarOpen ? 'active' : ''}`}>
-                  <Sidebar onNavigate={() => setSidebarOpen(false)} />
+                <div className={`navigation-bar ${navOpen ? 'active' : ''}`}>
+                  <NavigationBar onNavigate={() => setNavOpen(false)} />
                 </div>
                 <div
                   className="main-content"
-                  onClick={() => sidebarOpen && setSidebarOpen(false)}
+                  onClick={() => navOpen && setNavOpen(false)}
                 >
                   <Routes>
                     <Route path="/" element={<Dashboard />} />

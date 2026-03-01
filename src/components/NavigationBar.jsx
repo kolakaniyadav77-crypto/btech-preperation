@@ -24,7 +24,7 @@ const menu = [
   { name: "DevOps & Cloud", path: "/devops-cloud" },
 ];
 
-const Sidebar = ({ onNavigate }) => {
+const NavigationBar = ({ onNavigate }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, signOut } = useAuth();
@@ -41,10 +41,16 @@ const Sidebar = ({ onNavigate }) => {
     }
   };
 
+  // the outer container in App already uses the "navigation-bar" class for
+  // sliding behaviour.  we don't want the inner markup to duplicate that
+  // class because the CSS rules apply an additional `left: -280px` offset
+  // (and overlay) which caused the actual menu links to be pushed off‑screen
+  // inside the sidebar.  Use a separate "sidebar" wrapper instead so the
+  // surrounding styles only affect the outer element.
   return (
-    <aside className="sidebar">
+    <div className="sidebar">
       {/* Branding Card */}
-      <div className="sidebar-card branding-card">
+      <div className="nav-card branding-card">
         <div className="branding-icon">⚡</div>
         <div className="branding-content">
           <h2 className="branding-title">EDUCATION PATHWAY</h2>
@@ -53,7 +59,7 @@ const Sidebar = ({ onNavigate }) => {
 
       {/* User Profile Card */}
       {currentUser && (
-        <div className="sidebar-card user-profile-card">
+        <div className="nav-card user-profile-card">
           {currentUser.photoURL && (
             <div className="profile-avatar">
               <img src={currentUser.photoURL} alt="avatar" />
@@ -98,13 +104,13 @@ const Sidebar = ({ onNavigate }) => {
         ))}
       </nav>
 
-      <div className="sidebar-footer">
+      <div className="nav-footer">
         <button className="logout-btn" onClick={handleLogout}>
            Logout
         </button>
       </div>
-    </aside>
+    </div>
   );
 };
 
-export default Sidebar;
+export default NavigationBar;

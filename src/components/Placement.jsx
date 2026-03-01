@@ -397,7 +397,7 @@ const Placement = () => {
                 <div className="round-section">
                   <h4>❓ Interview Questions & Tips</h4>
                   <ul className="questions-list">
-                    {round.questions.map((q, i) => {
+                    {(round.questions || []).map((q, i) => {
                       const questionText = typeof q === 'string' ? q : q.question;
                       const answerText = typeof q === 'string' ? generateAnswer(questionText) : (q.answer || '');
                       return (

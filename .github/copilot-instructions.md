@@ -1,6 +1,94 @@
 ﻿# AI Agent Instructions — Education Pathway Platform
 
-**Purpose:** Concise, actionable guidance for AI agents working on this React+Vite+Express platform serving college placement prep.
+> **New condensed guide (2026‑03‑01)** – read this section first; the
+> detailed original instructions follow below if you need deeper context.
+
+**Purpose:** Help AI coding agents quickly understand and modify this
+React+Vite frontend backed by a small Spring Boot/Node proxy serving a
+college‑placement preparation app.
+
+## Quick setup
+```bash
+npm install
+npm run dev              # frontend on :5180
+npm run start:backend    # backend on :9000 (PORT env var)
+npm run build            # production build
+npm run serve            # preview build :4173
+npm run lint             # ESLint scan
+npm run deploy:ngrok:dev # share via ngrok
+```
+Run frontend and backend simultaneously during development.
+
+## Architecture at a glance
+- **Frontend**: React components in `src/components/` (each paired with a
+  `.css`), routing in `src/App.jsx`, protected by `AuthContext`.
+- **Backend**: Spring Boot app under `backend/` (plus a small Express
+  server at `server/index.js` used for Judge0 proxy). Exposes `/api/*` and
+  persists users to `server/users.json` (no real database required).
+- **Data**: Static datasets live in `src/data/` (`dsaProblems.js`,
+  `jobsSearch.js`, etc.).
+- **External services**: Supabase for OAuth, Judge0 RapidAPI for
+  non‑JS code compilation, Google Gemini API for AI chatbot answers.
+
+## Core workflows & patterns
+- **Auth** (`src/context/AuthContext.jsx`): use `useAuth()` hook. Persist
+  `currentUser` in localStorage key `education_path_current_user`. Always
+  guard `if (!currentUser?.id) return;` before making API calls. Protected
+  routes use `isAuthenticated` to redirect to `/login`.
+- **Progress tracking** (`src/utils/progressTracker.js`): stores progress in
+  localStorage `education_path_progress_{userId}`. Only `updateSectionProgress`
+  calls count; mere page visits do not. There are 18 named sections by
+  default.
+- **Code execution** (`src/services/codeCompilerService.js` + backend):
+  JavaScript runs client‑side via `new Function`; other languages POST to
+  `/api/compile`, which proxies to Judge0 and polls until completion. The
+  language‑ID map is defined in the backend. `checkCompilers()` health‑checks
+  available endpoints and drives a warning banner in `CodeEditor.jsx`.
+- **AI Chatbot** (`src/services/aiChatbotService.js`): a 100+ entry
+  KNOWLEDGE_BASE array of `{keywords, title, answer}` (markdown). Queries
+  tokenized and matched; fallback to Gemini via `chatGptService.askGemini()`.
+- **Job search** (`src/components/JobSearch.jsx` + `src/data/jobsSearch.js`):
+  Jobs have `deadlineOffsetDays` and `jobType` (`Internship`,
+  `Full-time`, `Contest`). The UI refreshes every minute; expired entries
+  auto‑drop. Use `npm run check-links` (see `scripts/linkChecker.js`) to
+  validate URLs before adding new jobs.
+- **Styling**: global palette in `src/index.css`. Component CSS files use a
+  purple→pink gradient, card shadows, and responsive grid
+  `repeat(auto-fit,minmax(250px,1fr))`.
+
+## Adding things
+1. **New page**: add `Component.jsx` + `Component.css`; wrap with
+   `<ProtectedRoute>` or `useAuth` guard; add route in `App.jsx`; add link in
+   `NavigationBar.jsx`.
+2. **New API endpoint**: add handler in `server/index.js`, then frontend
+   service that POSTs to `/api/…`.
+3. **Chatbot entry**: push object to `KNOWLEDGE_BASE` with keywords and a
+   markdown answer.
+4. **Job listing**: modify `src/data/jobsSearch.js`; run `npm run check-links`.
+
+## Environment variables
+- **Frontend (`.env.local`)** uses `VITE_` prefix:
+  `VITE_GOOGLE_API_KEY`, `VITE_JUDGE0_API_KEY`,
+  `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL` (usually
+  `/api` in dev; absolute URL in production).
+- **Backend (`.env`)**: `PORT`, `SPRING_DATASOURCE_URL` (default
+  H2 in‑memory), `JUDGE0_RAPIDAPI_KEY`, `GOOGLE_API_KEY`.
+Never commit these files.
+
+## Debug & build tips
+- Inspect `education_path_*` keys in DevTools Application panel.
+- Watch `/api/compile` calls in Network tab for Judge0 timing.
+- Restart `npm run dev` after changing env vars.
+- Common fixes: add `currentUser` guards, correct API base URL, restart
+  after lint errors, or re‑run link checker.
+
+## Conventions to remember
+- localStorage keys always start with `education_path_`.
+- `.jsx` components always have a sibling `.css`.
+- Progress sections are explicit; modify `progressTracker.js` when adding.
+- `npm run check-links` ensures that external links in code are alive.
+- The backend uses file persistence to avoid DB setup; be aware H2
+  in‑memory resets on every JVM restart.
 
 ## Quick Start (Commands)
 
@@ -210,7 +298,7 @@ GOOGLE_API_KEY=<Gemini API key>
 1. Create `src/components/NewPage.jsx` + `src/components/NewPage.css`
 2. Import `useAuth`, add auth guard: `if (!isAuthenticated) return <Navigate to="/login" />;`
 3. Add route in `src/App.jsx` routes array: `<Route path="/path" element={<ProtectedRoute element={<NewPage />} />} />`
-4. Register menu item in `src/components/Sidebar.jsx`; include icon + path
+4. Register menu item in `src/components/NavigationBar.jsx`; include icon + path
 5. If progress-tracked: add section name to `progressTracker.js` initialization (max 18 sections)
 
 **Add API endpoint:**
