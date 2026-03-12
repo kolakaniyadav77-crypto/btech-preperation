@@ -5,7 +5,7 @@ import '../styles/AuthPages.css';
 
 export default function LoginRegister() {
 
-  const [isLogin] = useState(false); // Always show signup form
+  const [isLogin, setIsLogin] = useState(true); // Toggle between login and signup
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -134,7 +134,29 @@ export default function LoginRegister() {
 
         {/* Form Container */}
         <div className="auth-form-container">
-          {/* No toggle buttons - just signup form */}
+          {/* Toggle Buttons */}
+          <div className="auth-toggle">
+            <button
+              className={`toggle-btn ${isLogin ? 'active' : ''}`}
+              onClick={() => {
+                setIsLogin(true);
+                setError('');
+                setSuccess('');
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              className={`toggle-btn ${!isLogin ? 'active' : ''}`}
+              onClick={() => {
+                setIsLogin(false);
+                setError('');
+                setSuccess('');
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
 
           {/* Error Message */}
           {error && (
@@ -284,7 +306,32 @@ disabled={
             </div>
           </div>
 
-          {/* Inline switch removed - signup only */}
+          {/* Inline switch below form: shows the opposite action visibly */}
+          <div className="auth-switch">
+            {isLogin ? (
+              <p>
+                Don't have an account?{' '}
+                <button 
+                  type="button" 
+                  className="footer-link" 
+                  onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
+                >
+                  Sign Up
+                </button>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{' '}
+                <button 
+                  type="button" 
+                  className="footer-link" 
+                  onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
+                >
+                  Sign In
+                </button>
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
