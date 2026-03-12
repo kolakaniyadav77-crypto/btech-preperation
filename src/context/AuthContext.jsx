@@ -2,6 +2,18 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
 
+// Safe JSON parser that handles non-JSON responses
+const parseJSON = async (response) => {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    // Return error text if not valid JSON
+    return { message: text || 'Server error' };
+  }
+};
+
 const AuthContext = createContext({
   currentUser: null,
   loading: true,
@@ -46,10 +58,11 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password, fullName })
       });
 
-      const data = await response.json();
+      const data = await parseJSON(response);
 
       if (!response.ok) {
-        return { error: data.message || 'Signup failed' };
+        const errMsg = data.message || data.error || 'Signup failed';
+        return { error: errMsg };
       }
 
       // Store token and user info
@@ -74,10 +87,11 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password })
       });
 
-      const data = await response.json();
+      const data = await parseJSON(response);
 
       if (!response.ok) {
-        return { error: data.message || 'Login failed' };
+        const errMsg = data.message || data.error || 'Login failed';
+        return { error: errMsg };
       }
 
       // Store token and user info
@@ -117,9 +131,11 @@ export const AuthProvider = ({ children }) => {
         }
       });
 
+      const data = await parseJSON(response);
+
       if (!response.ok) {
-        const data = await response.json();
-        return { error: data.message || 'Delete failed' };
+        const errMsg = data.message || data.error || 'Delete failed';
+        return { error: errMsg };
       }
 
       localStorage.removeItem('authToken');
