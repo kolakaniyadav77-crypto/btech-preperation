@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import progressTracker from '../utils/progressTracker';
-import { jobPlatforms, getActiveJobs, getJobsByPlatform, getUrgentJobs, formatDeadline } from '../data/jobsSearch';
+import { jobPlatforms, getActiveJobs, getJobsByPlatform, getUrgentJobs, formatDeadline, updateJobUrl } from '../data/jobsSearch';
 import '../styles/JobSearch.css';
 
 export default function JobSearch() {
@@ -11,7 +11,7 @@ export default function JobSearch() {
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all'); // all, internship, fulltime, contest
+  const [filterType, setFilterType] = useState('all'); // all, internship, fulltime
 
   // Filter jobs based on search term and job type
   const filteredJobs = jobs.filter(job => {
@@ -118,7 +118,6 @@ export default function JobSearch() {
           <option value="all">All Job Types</option>
           <option value="internship">Internships</option>
           <option value="fulltime">Full-time Jobs</option>
-          <option value="contest">Contests</option>
         </select>
       </div>
 
@@ -204,14 +203,37 @@ export default function JobSearch() {
                   <h3 className="job-title">{job.title}</h3>
                   {isUrgent && <span className="urgent-label">⚡ Urgent</span>}
                 </div>
-                <a 
-                  href={job.applyLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className={`apply-btn ${daysLeft < 0 ? 'disabled' : ''}`}
+                {/* choose the URL to use; replacementLink takes precedence when present */}
+                {(() => {
+                  if (daysLeft < 0 && !job.replacementLink) {
+                    return <span className="apply-btn disabled">Expired</span>;
+                  }
+
+                  const linkUrl = (daysLeft < 0 && job.replacementLink) ? job.replacementLink : job.applyLink;
+                  return (
+                    <a
+                      href={linkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="apply-btn"
+                    >
+                      Apply Now →
+                    </a>
+                  );
+                })()}
+                {/* edit button always available to correct bad URLs */}
+                <button
+                  className="apply-btn"
+                  onClick={() => {
+                    const newUrl = prompt('Enter updated application link:');
+                    if (newUrl) {
+                      updateJobUrl(job.id, newUrl);
+                      setJobs(getActiveJobs());
+                    }
+                  }}
                 >
-                  Apply Now →
-                </a>
+                  ✎
+                </button>
               </div>
 
               <div className="job-company-info">
@@ -241,7 +263,9 @@ export default function JobSearch() {
 
               <div className="job-footer">
                 <span className={`deadline ${isUrgent ? 'urgent-deadline' : ''}`}>
-                  {daysLeft < 0 ? '❌ Expired' : `⏰ ${formatDeadline(job.deadline)}`}
+                  {daysLeft < 0
+                    ? (job.replacementLink ? '🔄 Updated link available' : '❌ Expired')
+                    : `⏰ ${formatDeadline(job.deadline)}`}
                 </span>
               </div>
             </div>
@@ -259,6 +283,7 @@ export default function JobSearch() {
             <li>Check urgent jobs (less than 5 days left)</li>
             <li>Click "Apply Now" to apply directly</li>
             <li>Jobs expire automatically after deadline</li>
+            <li>If opening a job gives a 404 or generic homepage, click the ✎ button to correct its URL</li>
           </ul>
         </div>
         <div className="info-card">

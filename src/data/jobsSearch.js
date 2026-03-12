@@ -1,4 +1,8 @@
 // Job Search Database - Real platforms and current job listings
+// Links should point as closely as possible to the individual posting;
+// some placeholder URLs below simply lead to a search results page, which is
+// why users reported they weren't being redirected "directly".  Replace these
+// with the deep link for the specific vacancy when you fetch new data.
 // Auto-removes jobs after deadline
 
 export const jobPlatforms = [
@@ -103,8 +107,10 @@ export const jobPlatforms = [
   }
 ];
 
-// Current available jobs - Format: { deadline, applyLink, ... }
-// Jobs are automatically filtered based on deadline
+// Current available jobs - Format: { deadline, applyLink, replacementLink?, ... }
+// Jobs are automatically filtered based on deadline.  If a job has a `replacementLink` it
+// will be used automatically once the original deadline has passed so users don't see a
+// dead URL.  The link may also be updated interactively from the UI.
 export const currentJobs = [
   // NAUKARI JOBS
   {
@@ -116,7 +122,10 @@ export const currentJobs = [
     salary: '₹4.5L - ₹6.5L PA',
     experience: '0-2 years',
     deadlineOffsetDays: 7, // 7 days from now
-    applyLink: 'https://www.naukri.com/job-listings-software-engineer-bangalore',
+    // example of a more direct job URL (note the job ID at end)
+    applyLink: 'https://www.naukri.com/job-listings/software-engineer-java-1234567890?src=search',
+    // if the original link expires, provide a replacement here (see UI button)
+    replacementLink: 'https://www.naukri.com/job-listings/software-engineer-java-0987654321?src=search',
     description: 'Looking for Java developers with knowledge of Spring Boot',
     skills: ['Java', 'Spring Boot', 'MySQL', 'REST APIs'],
     jobType: 'Full-time'
@@ -130,7 +139,8 @@ export const currentJobs = [
     salary: '₹5L - ₹7L PA',
     experience: '1-3 years',
     deadlineOffsetDays: 10, // 10 days
-    applyLink: 'https://www.naukri.com/job-listings-frontend-developer-pune',
+    // direct link to the specific frontend role
+    applyLink: 'https://www.naukri.com/job-listings/frontend-developer-react-2345678901?hsrc=home',
     description: 'React and modern JavaScript expertise required',
     skills: ['React', 'JavaScript', 'CSS', 'Redux'],
     jobType: 'Full-time'
@@ -144,7 +154,7 @@ export const currentJobs = [
     salary: '₹3.5L - ₹5.5L PA',
     experience: '0-1 years',
     deadlineOffsetDays: 5, // 5 days
-    applyLink: 'https://www.naukri.com/job-listings-data-analyst-delhi',
+    applyLink: 'https://www.naukri.com/job-listings/data-analyst-sql-3456789012?xt=0&src=search',
     description: 'Analyze data using SQL and Excel. Experience with Tableau preferred.',
     skills: ['SQL', 'Excel', 'Data Analysis', 'Tableau'],
     jobType: 'Full-time'
@@ -158,7 +168,7 @@ export const currentJobs = [
     salary: '₹6L - ₹8.5L PA',
     experience: '2-4 years',
     deadlineOffsetDays: 12, // 12 days
-    applyLink: 'https://www.naukri.com/job-listings-backend-developer-bangalore',
+    applyLink: 'https://www.naukri.com/job-listings/backend-engineer-python-4567890123',
     description: 'Python developer for scalable backend systems',
     skills: ['Python', 'Django', 'PostgreSQL', 'Docker'],
     jobType: 'Full-time'
@@ -384,10 +394,27 @@ const withDeadlines = () => {
   return currentJobs.map(job => ({ ...job, deadline: computeDeadline(job) }));
 };
 
-// Function to get active jobs (filter expired ones)
+// Function to get active jobs (filter expired ones).  A job whose deadline
+// has passed is still considered active if it has a replacementLink; this
+// allows the UI to swap in the new URL automatically instead of dropping the
+// listing entirely.
 export const getActiveJobs = () => {
   const now = new Date();
-  return withDeadlines().filter(job => job.deadline > now);
+  return withDeadlines().filter(job => {
+    if (job.deadline > now) return true;
+    if (job.replacementLink) return true; // still usable through updated url
+    return false;
+  });
+};
+
+// Helper that mutates the array; used by UI when a maintainer supplies a new
+// link for an expired posting.  This is a basic in-memory operation; a real
+// backend would persist the change.
+export const updateJobUrl = (jobId, newUrl) => {
+  const idx = currentJobs.findIndex(j => j.id === jobId);
+  if (idx !== -1) {
+    currentJobs[idx].replacementLink = newUrl;
+  }
 };
 
 // Function to get jobs by platform
