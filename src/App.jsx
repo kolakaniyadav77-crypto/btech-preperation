@@ -15,6 +15,7 @@ import JobSearch from "./components/JobSearch";
 import CompanySpecific from "./components/CompanySpecific";
 import EntranceExams from "./components/EntranceExams";
 import Welcome from "./components/Welcome";
+import LoginRegister from "./components/LoginRegister";
 import AdminPanel from "./components/AdminPanel";
 import AIChatbot from "./components/AIChatbot";
 import AIMLTools from "./components/AIMLTools";
@@ -47,6 +48,7 @@ function App() {
         />
       ) : (
         <Routes>
+          <Route path="/login" element={<LoginRegister />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/admin/*" element={<AdminPanel />} />
           <Route
